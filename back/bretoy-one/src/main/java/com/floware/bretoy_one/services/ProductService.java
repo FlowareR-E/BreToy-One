@@ -22,4 +22,12 @@ public class ProductService {
         return repository.SaveProduct(product);
     }
 
+    public  Product updateProduct(int id, Product product){
+        product.setId(id);
+        return repository.SaveProduct(product);
+    }
+
+    public boolean deleteProduct(int id){
+        return repository.DeleteByID(id);
+    }
 }
