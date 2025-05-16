@@ -20,11 +20,11 @@ public class ProductRepository {
     public Product SaveProduct(Product product){
         if(product.getId() == 0){
             product.setId(idCounter.getAndIncrement());
+            products.add(product);
         }
         else {
             products.replaceAll(p -> p.getId() == product.getId() ? product : p);
         }
-        products.add(product);
         return product;
     }
 
