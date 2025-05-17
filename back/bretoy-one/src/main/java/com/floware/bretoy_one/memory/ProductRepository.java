@@ -31,4 +31,16 @@ public class ProductRepository {
     public boolean DeleteByID(int id){
         return products.removeIf(p -> p.getId() == id);
     }
+
+
+    public boolean MarkInOutStockByID(int id, boolean inStock){
+        return products.stream()
+                .filter(p -> p.getId() == id)
+                .findFirst()
+                .map(product -> {
+                    product.setInStock(inStock);
+                    return true;
+                })
+                .orElse(false);
+    }
 }

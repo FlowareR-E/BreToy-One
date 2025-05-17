@@ -30,4 +30,12 @@ public class ProductService {
     public boolean deleteProduct(int id){
         return repository.DeleteByID(id);
     }
+
+    public boolean outOfStock(int id){
+        return repository.MarkInOutStockByID(id, false);
+    }
+
+    public boolean inStock(int id){
+        return repository.MarkInOutStockByID(id, true);
+    }
 }

@@ -44,9 +44,34 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable int id){
         boolean success = service.deleteProduct(id);
-        if(success){
-            return ResponseEntity.noContent().build();
-        }
+        if(success) return ResponseEntity.noContent().build();
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", "error",
+                        "message", "Product with ID " + id + " not found",
+                        "timestamp", Instant.now()
+                ));
+    }
+
+    @PostMapping("/{id}/outofstock")
+    public ResponseEntity<?> outStock(@PathVariable int id){
+        boolean success = service.outOfStock(id);
+        if(success) return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", "error",
+                        "message", "Product with ID " + id + " not found",
+                        "timestamp", Instant.now()
+                ));
+    }
+
+    @PutMapping("/{id}/instock")
+    public ResponseEntity<?> inStock(@PathVariable int id){
+        boolean success = service.inStock(id);
+        if(success) return ResponseEntity.noContent().build();
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
