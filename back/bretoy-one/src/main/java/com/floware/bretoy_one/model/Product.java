@@ -60,18 +60,20 @@ public class Product {
         this.category = category;
         touch();
     }
+
     public int getQuantity() {
         return quantity;
     }
     public void setQuantity(int quantity) {
         this.quantity = quantity;
-        this.setInStock(this.quantity > 0);
+        this.inStock = (quantity > 0);
         touch();
     }
 
     public boolean getInStock() { return inStock; }
     public void setInStock(boolean inStock){
         this.inStock = inStock;
+        this.quantity = this.inStock ? 10 : 0;
         touch();
     }
 

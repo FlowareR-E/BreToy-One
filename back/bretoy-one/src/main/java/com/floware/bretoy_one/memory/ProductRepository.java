@@ -32,7 +32,6 @@ public class ProductRepository {
         return products.removeIf(p -> p.getId() == id);
     }
 
-
     public boolean MarkInOutStockByID(int id, boolean inStock){
         return products.stream()
                 .filter(p -> p.getId() == id)
