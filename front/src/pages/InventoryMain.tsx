@@ -1,6 +1,6 @@
 import { FaBoxes } from "react-icons/fa";
 import { SearchFilter } from "../components/SearchFilter";
-import { CustomTable } from "../components/CustomTable";
+import { ProductTable } from "../components/ProductTable";
 
 
 export const InventoryMain = () => {
@@ -30,7 +30,7 @@ export const InventoryMain = () => {
 
             </div>
             <div className="p-4 text-center text-gray-500">
-              <CustomTable />
+              <ProductTable />
             </div>
           </div>
         </div>

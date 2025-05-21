@@ -1,15 +1,27 @@
+import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash } from "react-icons/fa";
+import { useProducts } from "../hooks/useProduct";
+import type { Product } from "../api/types/product";
 
-export const CustomTable = () => {
-	const mockData = Array(10).fill({
-		id: "1",
-		name: "testname",
-		category: "Testcategory",
-		stock: 25,
-		price: 99.99,
-		status: "Out of Stock",
-		lastUpdated: "2025-05-15"
-	});
+
+export const ProductTable = () => {
+	const [products, setProducts] = useState<Product[]>([]);
+	const { fetchProducts, loading, error } = useProducts(); 
+
+
+	useEffect(() => {
+		const loadProducts = async () => {
+			const data = await fetchProducts();
+			setProducts(data);
+		};
+		loadProducts();
+	}, []);
+	
+	  if (loading && products.length === 0) {
+		return <div className="p-8 text-center">Loading...</div>;
+	  }
+	
+	  if (error) return <div className="p-8 text-center text-red-400">Error: {error}</div>;
 
 	return (
 		<div className="bg-gray-800 rounded-xl shadow-lg shadow-black/30 overflow-hidden">
@@ -28,7 +40,7 @@ export const CustomTable = () => {
 
 				{/* Desktop Body */}
 				<div className="divide-y divide-gray-700">
-					{mockData.map((item, index) => (
+					{products.map((item, index) => (
 						<div
 							key={index}
 							className="grid grid-cols-12 p-4 items-center hover:bg-gray-750 transition-colors"
@@ -36,11 +48,11 @@ export const CustomTable = () => {
 							<div className="col-span-1 text-indigo-400 font-mono">{item.id}</div>
 							<div className="col-span-3 truncate">{item.name}</div>
 							<div className="col-span-2 text-gray-400">{item.category}</div>
-							<div className="col-span-1 text-center">{item.stock}</div>
+							<div className="col-span-1 text-center">{item.quantity}</div>
 							<div className="col-span-2 text-center">${item.price.toFixed(2)}</div>
 							<div className="col-span-2 text-center">
-								<span className={`px-2 py-1 rounded-full text-xs ${item.status === "In Stock" ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}
-								> {item.status}
+								<span className={`px-2 py-1 rounded-full text-xs ${item.inStock ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}
+								> {item.inStock ? "In Stock" : "Out of Stock"}
 								</span>
 							</div>
 							<div className="col-span-1 flex justify-center space-x-2">
@@ -58,15 +70,15 @@ export const CustomTable = () => {
 
 			{/* Mobile Cards */}
 			<div className="md:hidden">
-				{mockData.map((item, index) => (
+				{products.map((item, index) => (
 					<div key={index} className="p-4 border-b border-gray-700">
 						<div className="flex justify-between items-start mb-2">
 							<div className="text-indigo-400 font-mono">ID: {item.id}</div>
-							<span className={`px-2 py-1 rounded-full text-xs ${item.status === "In Stock"
+							<span className={`px-2 py-1 rounded-full text-xs ${item.inStock
 									? "bg-green-900 text-green-300"
 									: "bg-red-900 text-red-300"
 								}`}>
-								{item.status}
+								{item.inStock ? "In Stock" : "Out of Stock"}
 							</span>
 						</div>
 						<div className="text-lg font-medium mb-1">{item.name}</div>
@@ -75,7 +87,7 @@ export const CustomTable = () => {
 						<div className="grid grid-cols-2 gap-2 text-sm mt-3">
 							<div>
 								<div className="text-gray-500">Stock</div>
-								<div>{item.stock}</div>
+								<div>{item.quantity}</div>
 							</div>
 							<div>
 								<div className="text-gray-500">Price</div>
