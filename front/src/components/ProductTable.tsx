@@ -2,18 +2,15 @@ import { useEffect, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
-import { sortData, type SortDirection } from "../utils/SortUtils";
+import { multiSortData, type SortConfig, type SortDirection } from "../utils/SortUtils";
 
 type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" | "inStock">;
 
 export const ProductTable = () => {
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, loading, error } = useProducts(); 
-	const [sortConfig, setSortConfig] = useState<{
-		key: SortableField;
-		direction: SortDirection;
-	} | null>(null);
-
+	
+	const [sortConfigs, setSortConfigs] = useState<SortConfig<Product>[]>([]);
 
 	useEffect(() => {
 		const loadProducts = async () => {
@@ -24,21 +21,43 @@ export const ProductTable = () => {
 	}, []);
 
 
-	const requestSort =(key: SortableField) => {
-		let direction: SortDirection = 'asc';
-		if(sortConfig && sortConfig.key === key && sortConfig.direction === 'asc'){
-			direction = 'desc';
-		} 
-		setSortConfig({key, direction})
+	const requestSort = (key: SortableField, event: React.MouseEvent) => {
+		event.preventDefault();
+	
+		setSortConfigs(prev => {
+			const isShiftKey = event.nativeEvent.shiftKey;
+			const existingIndex = prev.findIndex(config => config.key === key);
+	
+			if (existingIndex >= 0) {
+				const newConfigs = [...prev];
+				if (newConfigs[existingIndex].direction === 'asc') {
+					newConfigs[existingIndex] = { key, direction: 'desc' as SortDirection };
+					return newConfigs;
+				}
+				return newConfigs.filter((_, i) => i !== existingIndex);
+			}
+	
+			if (isShiftKey && prev.length > 0) {
+				const newConfig = { key, direction: 'asc' as SortDirection };
+				return [...prev.slice(0, 1), newConfig];
+			}
+	
+			return [{ key, direction: 'asc' as SortDirection }];
+		});
+	};
+	
+	const sortedProducts = sortConfigs.length > 0 ? multiSortData(products, sortConfigs) : products;
+	
+	const getSortPriority = (key: SortableField ) => {
+		const index = sortConfigs.findIndex(c => c.key === key);
+		return index >= 0 ? index +1 : null;
 	}
-	
-	const sortedProducts = sortConfig ? sortData(products, sortConfig.key, sortConfig.direction) : products;
-	
+
 	const getSortIcon = (key: SortableField) => {
-		if(!sortConfig || sortConfig.key !== key){
-			return <FaSort className="ml-1 text-gray-400"/>
-		}
-		return sortConfig.direction === 'asc' 
+		const config = sortConfigs.find(c => c.key === key);
+		
+		if(!config) return <FaSort className="ml-1 text-gray-400"/>
+		return config.direction === 'asc' 
 		? <FaSortUp className="ml-1 text-indigo-400" />
 		: <FaSortDown className="ml-1 text-indigo-400" />
 	}
@@ -58,33 +77,41 @@ export const ProductTable = () => {
 				<div className="grid grid-cols-12 bg-gray-700 p-4 rounded-t-lg items-center">
 					<div 
 						className="col-span-1 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("id")}
-						>ID {getSortIcon('id')}
+						onClick={(e)=> requestSort("id", e)}
+						>ID {getSortIcon('id')} 
+							{getSortPriority("id") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("id")}</span>)}
 					</div>
 					<div 
 						className="col-span-3 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("name")}
+						onClick={(e)=> requestSort("name", e)}
 						>Name {getSortIcon('name')}
+							{getSortPriority("name") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("name")}</span>)}
+
 					</div>
 					<div 
 						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("category")}
+						onClick={(e)=> requestSort("category", e)}
 						>Category {getSortIcon('category')}
+							{getSortPriority("category") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("category")}</span>)}
+
 					</div>
 					<div 
 						className="col-span-1 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("quantity")}
+						onClick={(e)=> requestSort("quantity", e)}
 						>Stock {getSortIcon('quantity')}
+							{getSortPriority("quantity") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("quantity")}</span>)}
 					</div>
 					<div 
 						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("price")}
+						onClick={(e)=> requestSort("price", e)}
 						>Price {getSortIcon('price')}
+							{getSortPriority("price") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("price")}</span>)}
 					</div>
 					<div 
 						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={()=> requestSort("inStock")}
+						onClick={(e)=> requestSort("inStock", e)}
 						>Status {getSortIcon('inStock')}
+							{getSortPriority("inStock") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("inStock")}</span>)}
 					</div>
 					<div className="col-span-1 font-medium text-center">Actions</div>
 				</div>
