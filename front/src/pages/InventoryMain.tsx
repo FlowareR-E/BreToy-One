@@ -25,10 +25,6 @@ export const InventoryMain = () => {
 
           {/* Table Section */}
           <div className="bg-gray-800 rounded-xl shadow-lg  mt-5 shadow-black/30 overflow-hidden">
-            <div className="">
-              <div className="h-12 bg-gray-700 rounded-t-lg"></div>
-
-            </div>
             <div className="p-4 text-center text-gray-500">
               <ProductTable />
             </div>
