@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
-import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
+import { sortData, type SortDirection } from "../utils/SortUtils";
 
+type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" | "inStock">;
 
 export const ProductTable = () => {
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, loading, error } = useProducts(); 
+	const [sortConfig, setSortConfig] = useState<{
+		key: SortableField;
+		direction: SortDirection;
+	} | null>(null);
 
 
 	useEffect(() => {
@@ -16,7 +22,28 @@ export const ProductTable = () => {
 		};
 		loadProducts();
 	}, []);
+
+
+	const requestSort =(key: SortableField) => {
+		let direction: SortDirection = 'asc';
+		if(sortConfig && sortConfig.key === key && sortConfig.direction === 'asc'){
+			direction = 'desc';
+		} 
+		setSortConfig({key, direction})
+	}
 	
+	const sortedProducts = sortConfig ? sortData(products, sortConfig.key, sortConfig.direction) : products;
+	
+	const getSortIcon = (key: SortableField) => {
+		if(!sortConfig || sortConfig.key !== key){
+			return <FaSort className="ml-1 text-gray-400"/>
+		}
+		return sortConfig.direction === 'asc' 
+		? <FaSortUp className="ml-1 text-indigo-400" />
+		: <FaSortDown className="ml-1 text-indigo-400" />
+	}
+	
+
 	  if (loading && products.length === 0) {
 		return <div className="p-8 text-center">Loading...</div>;
 	  }
@@ -29,18 +56,42 @@ export const ProductTable = () => {
 			{/* Desktop Header */}
 			<div className="hidden md:block">
 				<div className="grid grid-cols-12 bg-gray-700 p-4 rounded-t-lg items-center">
-					<div className="col-span-1 font-medium">ID</div>
-					<div className="col-span-3 font-medium">Name</div>
-					<div className="col-span-2 font-medium">Category</div>
-					<div className="col-span-1 font-medium text-center">Stock</div>
-					<div className="col-span-2 font-medium text-center">Price</div>
-					<div className="col-span-2 font-medium text-center">Status</div>
+					<div 
+						className="col-span-1 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("id")}
+						>ID {getSortIcon('id')}
+					</div>
+					<div 
+						className="col-span-3 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("name")}
+						>Name {getSortIcon('name')}
+					</div>
+					<div 
+						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("category")}
+						>Category {getSortIcon('category')}
+					</div>
+					<div 
+						className="col-span-1 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("quantity")}
+						>Stock {getSortIcon('quantity')}
+					</div>
+					<div 
+						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("price")}
+						>Price {getSortIcon('price')}
+					</div>
+					<div 
+						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
+						onClick={()=> requestSort("inStock")}
+						>Status {getSortIcon('inStock')}
+					</div>
 					<div className="col-span-1 font-medium text-center">Actions</div>
 				</div>
 
 				{/* Desktop Body */}
 				<div className="divide-y divide-gray-700">
-					{products.map((item, index) => (
+					{sortedProducts.map((item, index) => (
 						<div
 							key={index}
 							className="grid grid-cols-12 p-4 items-center hover:bg-gray-750 transition-colors"
