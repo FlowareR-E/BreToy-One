@@ -1,17 +1,29 @@
 package com.floware.bretoy_one.model;
 
+import java.time.LocalDateTime;
+
 public class Product {
+
     private int id;
     private String name;
+    private String category;
     private float price;
     private int quantity;
 
-    //region Constructors
-    public Product(){}
+    private final LocalDateTime creationDate;
+    private LocalDateTime updateDate;
 
-    public Product(String name, float price, int quantity) {
+    //region Constructors
+    public Product(){
+        this.creationDate = LocalDateTime.now();
+        this.updateDate = LocalDateTime.now();
+    }
+
+    public Product(String name, String category, float price, int quantity) {
+        this();
         this.id = 0;
         this.name = name;
+        this.category = category;
         this.price = price;
         this.quantity = quantity;
     }
@@ -21,7 +33,6 @@ public class Product {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -29,7 +40,6 @@ public class Product {
     public int getId() {
         return id;
     }
-
     public void setId(int id) {
         this.id = id;
     }
@@ -37,18 +47,45 @@ public class Product {
     public float getPrice() {
         return price;
     }
-
     public void setPrice(float price) {
         this.price = price;
+        touch();
+    }
+
+    public String getCategory(){
+        return this.category;
+    }
+    public void setCategory(String category){
+        this.category = category;
+        touch();
     }
 
     public int getQuantity() {
         return quantity;
     }
-
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+        touch();
     }
 
+    public LocalDateTime getCreationDate() { return creationDate; }
+
+    public LocalDateTime getUpdateDate() { return updateDate; }
+
+    private void touch(){
+        this.updateDate = LocalDateTime.now();
+    }
     //endregion
+
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", category='" + category + '\'' +
+                ", price=" + price +
+                ", quantity=" + quantity +
+                '}';
+    }
 }
