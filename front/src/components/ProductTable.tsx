@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaSyncAlt, FaPlus } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
 import { multiSortData, type SortConfig, type SortDirection } from "../utils/SortUtils";
 import { ConfimationModal } from "./ConfirmationModal";
 import { CreateModal } from "./CreateModal";
+import { filterProducts, type ProductFilter } from "../utils/filterUtils";
 
 type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" | "inStock">;
 
-export const ProductTable = () => {
+
+interface ProductTableProps {
+	activeFilters: ProductFilter;
+	onProductsLoaded?: (products: Product[]) => void
+}
+
+export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTableProps) => {
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, deleteProduct, createProduct, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
@@ -29,6 +36,13 @@ export const ProductTable = () => {
 	}, []);
 
 	useEffect(()=> {
+		setPagination(prev => ({
+			...prev, 
+			currentPage: 1
+		}))
+	}, [activeFilters])
+
+	useEffect(()=> {
 		setPagination(prev=>({...prev, currentPage: 1}));
 	}, [sortConfigs])
 
@@ -40,17 +54,17 @@ export const ProductTable = () => {
 				...prev,
 				totalItems: data.length,
 			}));
-			console.log(data.length);
-
+			onProductsLoaded?.(data);
 		};
 		loadProducts();
 	}
+	
 
 	const getPaginatedData = () => {
 		const { currentPage, itemsPerPage } = pagination;
 		const startIndex = (currentPage - 1) * itemsPerPage;
 		const endIndex = startIndex + itemsPerPage;
-		return sortedProducts.slice(startIndex, endIndex);
+		return filteredAndSortedProducts.slice(startIndex, endIndex);
 	};
 
 	const handlePageChange = (newPage: number) => {
@@ -119,7 +133,17 @@ export const ProductTable = () => {
 			return [{ key, direction: 'asc' as SortDirection }];
 		});
 	};
-	const sortedProducts = sortConfigs.length > 0 ? multiSortData(products, sortConfigs) : products;
+	const filteredAndSortedProducts = useMemo(()=> {
+		const filtered = filterProducts(products, activeFilters);
+		return sortConfigs.length > 0 ? multiSortData(filtered, sortConfigs) : filtered;
+	}, [products, activeFilters, sortConfigs])
+
+
+	useEffect(()=> {
+		setPagination(prev=>({...prev, totalItems: filteredAndSortedProducts.length}))
+	}, [filteredAndSortedProducts]);
+
+	
 	const getSortPriority = (key: SortableField) => {
 		const index = sortConfigs.findIndex(c => c.key === key);
 		return index >= 0 ? index + 1 : null;

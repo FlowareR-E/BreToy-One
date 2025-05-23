@@ -1,9 +1,19 @@
 import { FaBoxes } from "react-icons/fa";
 import { SearchFilter } from "../components/SearchFilter";
 import { ProductTable } from "../components/ProductTable";
+import { useState } from "react";
+import type { ProductFilter } from "../utils/filterUtils";
+import { getCategories } from "../utils/productUtils";
+import type { Product } from "../api/types/product";
 
 
 export const InventoryMain = () => {
+  const [activeFilters, setActiveFilters] = useState<ProductFilter>({});
+  const [categories, setCategories ] = useState<string[]>([]);
+
+  const handleProductsLoaded = (products: Product[])=> {
+    setCategories(getCategories(products));
+  }
   return (
     <div className="min-h-screen text-gray-100 mt-10 sm:mt-5 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -19,14 +29,21 @@ export const InventoryMain = () => {
         </div>
 
         {/* Body */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto ">
+          
           {/* Search Section */}
-          <SearchFilter />
+          <SearchFilter 
+            onFilterChange={setActiveFilters}
+            categories={categories}
+            />
 
           {/* Table Section */}
           <div className="bg-gray-800 rounded-xl shadow-lg  mt-5 shadow-black/30 overflow-hidden">
             <div className="p-4 text-center text-gray-500">
-              <ProductTable />
+              <ProductTable
+                activeFilters={activeFilters}
+                onProductsLoaded={handleProductsLoaded}
+                />
             </div>
           </div>
         </div>

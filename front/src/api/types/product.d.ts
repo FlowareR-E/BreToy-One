@@ -7,8 +7,3 @@ export interface Product {
     category?: string;
     lastUpdated?: string;
 }
-
-export interface ProductListResponse {
-    products: Product[];
-    totalItems: number;
-}
