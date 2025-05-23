@@ -7,13 +7,13 @@ import { ConfimationModal } from "./ConfirmationModal";
 import { ProductModal } from "./ProductModal";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
 
-type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" >;
+type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price">;
 type ConfirmationModalAction = '' | 'delete' | 'toggleStock';
 
 type ConfirmationModalState = {
 	isOpen: boolean;
-	productToDelete: Product | null, 
-	productToToggleStock: Product | null, 
+	productToDelete: Product | null,
+	productToToggleStock: Product | null,
 	actionType: ConfirmationModalAction
 }
 
@@ -23,12 +23,13 @@ interface ProductTableProps {
 	onProductsLoaded?: (products: Product[]) => void
 }
 
-export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTableProps) => {
+export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTableProps) => {
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, deleteProduct, updateProduct, createProduct, toggleStock, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
 	const [editModalState, setEditModalState] = useState<{
-		isOpen: boolean; product: Product | null }>({ isOpen: false,  product : null });
+		isOpen: boolean; product: Product | null
+	}>({ isOpen: false, product: null });
 
 	const [confirmationModalState, setConfirmationModalState] = useState<ConfirmationModalState>({
 		isOpen: false,
@@ -39,20 +40,19 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 
 	const handleEditClick = (product: Product) => {
 		setEditModalState({
-			isOpen: true, 
+			isOpen: true,
 			product
 		})
 	}
 
 	const handleUpdateProduct = async (productData: Omit<Product, "id">) => {
-		if(!editModalState.product?.id) return;
+		if (!editModalState.product?.id) return;
 
-		try{
+		try {
 			await updateProduct(editModalState.product.id, productData);
-			const updatedProducts = await fetchProducts();
-			setProducts(updatedProducts);
-			setEditModalState({ isOpen: false, product: null})
-		} catch (err){
+			handleFetchProducts();
+			setEditModalState({ isOpen: false, product: null })
+		} catch (err) {
 			console.error("Error updating product: " + err)
 			throw err;
 		}
@@ -70,15 +70,15 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 		handleFetchProducts();
 	}, []);
 
-	useEffect(()=> {
+	useEffect(() => {
 		setPagination(prev => ({
-			...prev, 
+			...prev,
 			currentPage: 1
 		}))
 	}, [activeFilters])
 
-	useEffect(()=> {
-		setPagination(prev=>({...prev, currentPage: 1}));
+	useEffect(() => {
+		setPagination(prev => ({ ...prev, currentPage: 1 }));
 	}, [sortConfigs])
 
 	const handleFetchProducts = async () => {
@@ -89,11 +89,12 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 				...prev,
 				totalItems: data.length,
 			}));
+			console.log("Products loaded:", data);
 			onProductsLoaded?.(data);
 		};
 		loadProducts();
 	}
-	
+
 
 	const getPaginatedData = () => {
 		const { currentPage, itemsPerPage } = pagination;
@@ -115,8 +116,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 	const handleCreateProduct = async (productData: Omit<Product, "id">) => {
 		try {
 			await createProduct(productData);
-			const updatedProducts = await fetchProducts();
-			setProducts(updatedProducts);
+			handleFetchProducts();
 			setCreateModalState(false);
 		} catch (err) {
 			console.log(err instanceof Error ? err.message : "API Error");
@@ -130,32 +130,31 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 			productToDelete: product,
 			productToToggleStock: null,
 			actionType: 'delete'
-	});
+		});
 	}
 
 	const handleToggleStockClick = (product: Product) => {
-		setConfirmationModalState({isOpen: true, productToToggleStock: product, productToDelete : null, actionType : "toggleStock"})
+		setConfirmationModalState({ isOpen: true, productToToggleStock: product, productToDelete: null, actionType: "toggleStock" })
 	}
 
 	const handleConfirm = () => {
-		if(confirmationModalState.actionType === 'delete'){
+		if (confirmationModalState.actionType === 'delete') {
 			handleConfirmDelete();
-		} else if(confirmationModalState.actionType === 'toggleStock'){
+		} else if (confirmationModalState.actionType === 'toggleStock') {
 			handleConfirmToggleStock();
 		}
 	}
 	const handleConfirmToggleStock = async () => {
-		if(!confirmationModalState.productToToggleStock?.id) return;
+		if (!confirmationModalState.productToToggleStock?.id) return;
 
 		try {
 			await toggleStock(confirmationModalState.productToToggleStock.id, !confirmationModalState.productToToggleStock.quantity);
-			const updatedProducts = await fetchProducts();
-			setProducts(updatedProducts);
+			handleFetchProducts();
 		} finally {
 			setConfirmationModalState({
 				isOpen: false,
-				productToDelete: null, 
-				productToToggleStock: null, 
+				productToDelete: null,
+				productToToggleStock: null,
 				actionType: ''
 			})
 		}
@@ -165,13 +164,12 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 		if (!confirmationModalState.productToDelete?.id) return;
 
 		await deleteProduct(confirmationModalState.productToDelete.id);
-		const updatedProducts = await fetchProducts();
-		setProducts(updatedProducts);
+		handleFetchProducts();
 		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: '' });
 	};
 
 	const handleCloseConfirmationModal = () => {
-		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: ''  });
+		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: '' });
 	};
 
 	const requestSort = (key: SortableField, event: React.MouseEvent) => {
@@ -198,17 +196,17 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 			return [{ key, direction: 'asc' as SortDirection }];
 		});
 	};
-	const filteredAndSortedProducts = useMemo(()=> {
+	const filteredAndSortedProducts = useMemo(() => {
 		const filtered = filterProducts(products, activeFilters);
 		return sortConfigs.length > 0 ? multiSortData(filtered, sortConfigs) : filtered;
 	}, [products, activeFilters, sortConfigs])
 
 
-	useEffect(()=> {
-		setPagination(prev=>({...prev, totalItems: filteredAndSortedProducts.length}))
+	useEffect(() => {
+		setPagination(prev => ({ ...prev, totalItems: filteredAndSortedProducts.length }))
 	}, [filteredAndSortedProducts]);
 
-	
+
 	const getSortPriority = (key: SortableField) => {
 		const index = sortConfigs.findIndex(c => c.key === key);
 		return index >= 0 ? index + 1 : null;
@@ -239,11 +237,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 				isOpen={confirmationModalState.isOpen}
 				onClose={handleCloseConfirmationModal}
 				onConfirm={handleConfirm}
-				title= {confirmationModalState.actionType === 'delete' ? 'Delete Product' : 'Update Stock Status'}
-				message={confirmationModalState.actionType === 'delete'? 
+				title={confirmationModalState.actionType === 'delete' ? 'Delete Product' : 'Update Stock Status'}
+				message={confirmationModalState.actionType === 'delete' ?
 					`Are you sure you want to delete "${confirmationModalState.productToDelete?.name}?"` :
-`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.quantity ?? 0 > 0 ? "Out of Stock" : "In Stock"
-}"`				}
+					`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.quantity ?? 0 > 0 ? "Out of Stock" : "In Stock"
+					}"`}
 				confirmText={confirmationModalState.actionType === 'delete' ? 'Delete' : 'Update'}
 				danger={true}
 			/>
@@ -257,7 +255,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 
 			<ProductModal
 				isOpen={editModalState.isOpen}
-				onClose={() => setEditModalState({isOpen: false, product: null})}
+				onClose={() => setEditModalState({ isOpen: false, product: null })}
 				onSubmit={handleUpdateProduct}
 				title="Edit a product"
 				initialData={editModalState.product}
@@ -316,10 +314,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 						{getSortPriority("price") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("price")}</span>)}
 					</div>
 					<div
-						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={(e) => requestSort("quantity", e)}
-					>Status {getSortIcon('quantity')}
-						{getSortPriority("quantity") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("quantity")}</span>)}
+						className="col-span-2 font-medium text-cente"
+					>Status
 					</div>
 					<div className="col-span-1 font-medium text-center">Actions</div>
 				</div>
@@ -337,16 +333,20 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							<div className="col-span-1 text-center">{item.quantity}</div>
 							<div className="col-span-2 text-center">${item.price.toFixed(2)}</div>
 							<div className="col-span-2 text-center">
-								<span 
+								<span
 									onClick={() => handleToggleStockClick(item)}
-									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity>0  ? "bg-green-900 hover:bg-green-700 text-green-300" : "bg-red-900 hover:bg-red-700 text-red-300"}`}
-								> {item.quantity>0 ? "In Stock" : "Out of Stock"}
+									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity > 0 ? (item.quantity > 10 ?
+										 "bg-green-900 text-green-300" : "bg-yellow-900 hover:bg-yellow-700 text-yellow-300") : 
+										 "bg-red-900 hover:bg-red-700 text-red-300"}`}
+								> {item.quantity > 0 ? (item.quantity > 10 ? "In Stock " : "Low Stock") : "Out of Stock"}
 								</span>
+
+							
 							</div>
 							<div className="col-span-1 flex justify-center space-x-2">
-								<button 
+								<button
 									className="p-1 text-gray-400 hover:text-indigo-400 transition-colors"
-									onClick={()=> handleEditClick(item)}
+									onClick={() => handleEditClick(item)}
 								>
 									<FaEdit />
 								</button>
@@ -368,11 +368,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 					<div key={index} className="p-4 border-b border-gray-700">
 						<div className="flex justify-between items-start mb-2">
 							<div className="text-indigo-400 font-mono">ID: {item.id}</div>
-							<span className={`px-2 py-1 rounded-full text-xs ${item.quantity>0 
-								? "bg-green-900 text-green-300"
-								: "bg-red-900 text-red-300"
+							<span className={`px-2 py-1 rounded-full text-xs ${item.quantity > 0
+									? (item.quantity > 10 ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300")
+									: "bg-red-900 text-red-300"
 								}`}>
-								{item.quantity>0  ? "In Stock" : "Out of Stock"}
+								{item.quantity > 0 ? "In Stock" : "Out of Stock"}
 							</span>
 						</div>
 						<div className="text-lg font-medium mb-1">{item.name}</div>
@@ -391,14 +391,14 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 
 						<div className="flex justify-end space-x-3 mt-3">
 							<button className="flex items-center text-sm text-indigo-400">
-								<FaEdit 
-									className="mr-1" 
-									onClick={()=> handleEditClick(item)}
-									/> Edit
+								<FaEdit
+									className="mr-1"
+									onClick={() => handleEditClick(item)}
+								/> Edit
 							</button>
 							<button className="flex items-center text-sm text-red-400">
-								<FaTrash 
-									className="mr-1" 
+								<FaTrash
+									className="mr-1"
 									onClick={() => handleDeleteClick(item)}
 								/> Delete
 							</button>
@@ -429,8 +429,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							<button
 								key={page}
 								className={`w-10 h-10 rounded-md ${page === pagination.currentPage
-										? "bg-indigo-600 text-white"
-										: "bg-gray-700 hover:bg-gray-600"
+									? "bg-indigo-600 text-white"
+									: "bg-gray-700 hover:bg-gray-600"
 									} transition-colors`}
 								onClick={() => handlePageChange(page)}
 							>
@@ -448,8 +448,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							{pagination.currentPage > 3 && (
 								<button
 									className={`w-10 h-10 rounded-md ${pagination.currentPage > 3 && pagination.currentPage < totalPages - 2
-											? "bg-indigo-600 text-white"
-											: "bg-gray-700 hover:bg-gray-600"
+										? "bg-indigo-600 text-white"
+										: "bg-gray-700 hover:bg-gray-600"
 										} transition-colors`}
 									onClick={() => handlePageChange(pagination.currentPage)}
 								>
@@ -464,8 +464,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							{totalPages > 3 && (
 								<button
 									className={`w-10 h-10 rounded-md ${pagination.currentPage === totalPages
-											? "bg-indigo-600 text-white"
-											: "bg-gray-700 hover:bg-gray-600"
+										? "bg-indigo-600 text-white"
+										: "bg-gray-700 hover:bg-gray-600"
 										} transition-colors`}
 									onClick={() => handlePageChange(totalPages)}
 								>

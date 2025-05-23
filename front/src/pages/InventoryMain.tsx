@@ -5,7 +5,6 @@ import { useState } from "react";
 import type { ProductFilter } from "../utils/filterUtils";
 import { getCategories } from "../utils/productUtils";
 import type { Product } from "../api/types/product";
-import apiClient from "../api/axiosConfig";
 
 
 export const InventoryMain = () => {
@@ -15,6 +14,7 @@ export const InventoryMain = () => {
   const handleProductsLoaded = (products: Product[])=> {
     setCategories(getCategories(products));
   }
+
   return (
     <div className="min-h-screen text-gray-100 mt-10 sm:mt-5 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
