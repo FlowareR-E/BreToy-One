@@ -16,7 +16,6 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
         category: "",
         price: 0,
         quantity: 0,
-        inStock: false,
         ...initialData
     });
 
@@ -31,10 +30,11 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
         setFormData(prev => ({
             ...prev,
             [name]: name === "price" || name === "quantity"
-                ? Number(value)
+                ? value === "" ? 0 : Number(value) 
                 : value
         }));
     };
@@ -61,14 +61,12 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
         try {
             await onSubmit({
                 ...formData,
-                inStock: formData.quantity > 0
             });
             setFormData({
                 name: "",
                 category: "",
                 price: 0,
                 quantity: 0,
-                inStock: false,
             });
             setErrors({});
         } finally {
@@ -82,7 +80,6 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
             category: "",
             price: 0,
             quantity: 0,
-            inStock: false,
         });
         setErrors({})
         onClose();
@@ -180,7 +177,6 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
 
                     <div className="flex items-center mt-2">
                         <div
-                            id="inStock"
                             className={`h-4 w-4 border-gray-600 rounded ${formData.quantity > 0 ? "bg-green-500" : "bg-red-500"}`}
                         />
                         <label htmlFor="inStock" className="ml-2 text-sm">

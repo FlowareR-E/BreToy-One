@@ -9,7 +9,6 @@ public class Product {
     private String category;
     private float price;
     private int quantity;
-    private boolean inStock;
 
     private final LocalDateTime creationDate;
     private LocalDateTime updateDate;
@@ -66,14 +65,6 @@ public class Product {
     }
     public void setQuantity(int quantity) {
         this.quantity = quantity;
-        this.inStock = (quantity > 0);
-        touch();
-    }
-
-    public boolean getInStock() { return inStock; }
-    public void setInStock(boolean inStock){
-        this.inStock = inStock;
-        this.quantity = this.inStock ? 10 : 0;
         touch();
     }
 
@@ -95,7 +86,6 @@ public class Product {
                 ", category='" + category + '\'' +
                 ", price=" + price +
                 ", quantity=" + quantity +
-                ", inStock=" + inStock +
                 '}';
     }
 }

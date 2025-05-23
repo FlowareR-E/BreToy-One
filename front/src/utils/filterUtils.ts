@@ -20,7 +20,7 @@ export const filterProducts = (
                 return false;
         }
 
-        if(filters.inStock !== undefined && product.inStock !== filters.inStock){
+        if(filters.inStock !== undefined && product.quantity > 0 !== filters.inStock){
             return false;
         }
 

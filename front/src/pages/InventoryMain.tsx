@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ProductFilter } from "../utils/filterUtils";
 import { getCategories } from "../utils/productUtils";
 import type { Product } from "../api/types/product";
+import apiClient from "../api/axiosConfig";
 
 
 export const InventoryMain = () => {

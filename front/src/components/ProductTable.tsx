@@ -7,7 +7,7 @@ import { ConfimationModal } from "./ConfirmationModal";
 import { ProductModal } from "./ProductModal";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
 
-type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" | "inStock">;
+type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" >;
 type ConfirmationModalAction = '' | 'delete' | 'toggleStock';
 
 type ConfirmationModalState = {
@@ -148,7 +148,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 		if(!confirmationModalState.productToToggleStock?.id) return;
 
 		try {
-			await toggleStock(confirmationModalState.productToToggleStock.id, !confirmationModalState.productToToggleStock.inStock)
+			await toggleStock(confirmationModalState.productToToggleStock.id, !confirmationModalState.productToToggleStock.quantity);
 			const updatedProducts = await fetchProducts();
 			setProducts(updatedProducts);
 		} finally {
@@ -242,8 +242,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 				title= {confirmationModalState.actionType === 'delete' ? 'Delete Product' : 'Update Stock Status'}
 				message={confirmationModalState.actionType === 'delete'? 
 					`Are you sure you want to delete "${confirmationModalState.productToDelete?.name}?"` :
-					`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.inStock ? "Out of Stock" : "In Stock"}"`
-				}
+`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.quantity ?? 0 > 0 ? "Out of Stock" : "In Stock"
+}"`				}
 				confirmText={confirmationModalState.actionType === 'delete' ? 'Delete' : 'Update'}
 				danger={true}
 			/>
@@ -317,9 +317,9 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 					</div>
 					<div
 						className="col-span-2 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
-						onClick={(e) => requestSort("inStock", e)}
-					>Status {getSortIcon('inStock')}
-						{getSortPriority("inStock") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("inStock")}</span>)}
+						onClick={(e) => requestSort("quantity", e)}
+					>Status {getSortIcon('quantity')}
+						{getSortPriority("quantity") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("quantity")}</span>)}
 					</div>
 					<div className="col-span-1 font-medium text-center">Actions</div>
 				</div>
@@ -339,8 +339,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							<div className="col-span-2 text-center">
 								<span 
 									onClick={() => handleToggleStockClick(item)}
-									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.inStock ? "bg-green-900 hover:bg-green-700 text-green-300" : "bg-red-900 hover:bg-red-700 text-red-300"}`}
-								> {item.inStock ? "In Stock" : "Out of Stock"}
+									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity>0  ? "bg-green-900 hover:bg-green-700 text-green-300" : "bg-red-900 hover:bg-red-700 text-red-300"}`}
+								> {item.quantity>0 ? "In Stock" : "Out of Stock"}
 								</span>
 							</div>
 							<div className="col-span-1 flex justify-center space-x-2">
@@ -368,11 +368,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 					<div key={index} className="p-4 border-b border-gray-700">
 						<div className="flex justify-between items-start mb-2">
 							<div className="text-indigo-400 font-mono">ID: {item.id}</div>
-							<span className={`px-2 py-1 rounded-full text-xs ${item.inStock
+							<span className={`px-2 py-1 rounded-full text-xs ${item.quantity>0 
 								? "bg-green-900 text-green-300"
 								: "bg-red-900 text-red-300"
 								}`}>
-								{item.inStock ? "In Stock" : "Out of Stock"}
+								{item.quantity>0  ? "In Stock" : "Out of Stock"}
 							</span>
 						</div>
 						<div className="text-lg font-medium mb-1">{item.name}</div>

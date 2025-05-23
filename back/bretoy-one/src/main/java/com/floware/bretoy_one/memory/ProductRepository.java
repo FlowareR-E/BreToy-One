@@ -37,7 +37,7 @@ public class ProductRepository {
                 .filter(p -> p.getId() == id)
                 .findFirst()
                 .map(product -> {
-                    product.setInStock(inStock);
+                    product.setQuantity(inStock ? 10 : 0);
                     return true;
                 })
                 .orElse(false);
