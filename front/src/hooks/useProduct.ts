@@ -71,11 +71,24 @@ export const useProducts = () => {
         }
     }
 
+    const toggleStock = async (id: number, inStock: boolean) => {
+        try {
+            setLoading(true);
+            return await ProductServices.toggleStock(id,inStock);
+        } catch (err){
+            setError(err instanceof Error ? err.message : "API Error");
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return {
         fetchProducts, 
         createProduct, 
         updateProduct,
         deleteProduct,
+        toggleStock,
         applyFilters, 
         clearFilters,
         filteredProducts,

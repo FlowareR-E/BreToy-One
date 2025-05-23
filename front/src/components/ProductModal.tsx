@@ -1,30 +1,33 @@
 import { useState, useEffect } from "react";
 import type { Product } from "../api/types/product";
 
-type CreateModalProps = {
+type ProductModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (product: Omit<Product, "id">) => Promise<void>;
+    onSubmit: (product: Omit<Product, "id">) => Promise<void>;
+    title: string;
+    initialData?: Omit<Product, "id"> | null
 };
 
-export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => {
+export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initialData }: ProductModalProps) => {
+
     const [formData, setFormData] = useState<Omit<Product, "id">>({
         name: "",
         category: "",
         price: 0,
         quantity: 0,
         inStock: false,
+        ...initialData
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        setFormData(prev => ({
-            ...prev,
-            inStock: prev.quantity > 0
-        }));
-    }, [formData.quantity]);
+        if (initialData) {
+            setFormData(initialData)
+        }
+    }, [initialData])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -35,6 +38,7 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
                 : value
         }));
     };
+
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
@@ -55,7 +59,10 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
 
         setIsSubmitting(true);
         try {
-            await onCreate(formData);
+            await onSubmit({
+                ...formData,
+                inStock: formData.quantity > 0
+            });
             setFormData({
                 name: "",
                 category: "",
@@ -69,12 +76,24 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
         }
     };
 
+    const handleClose = () => {
+        setFormData({
+            name: "",
+            category: "",
+            price: 0,
+            quantity: 0,
+            inStock: false,
+        });
+        setErrors({})
+        onClose();
+    }
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
-                <h3 className="text-xl font-semibold mb-4">Create New Product</h3>
+                <h3 className="text-xl font-semibold mb-4">{title}</h3>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -128,7 +147,7 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
                                     type="number"
                                     min="0.01"
                                     step="0.01"
-                                    value={formData.price}
+                                    value={formData.price === 0 ? "" : formData.price}
                                     onChange={handleChange}
                                     className={`w-full bg-gray-700 border ${errors.price ? "border-red-500" : "border-gray-600"
                                         } rounded-md pl-8 pr-3 py-2 text-sm`}
@@ -165,14 +184,15 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
                             className={`h-4 w-4 border-gray-600 rounded ${formData.quantity > 0 ? "bg-green-500" : "bg-red-500"}`}
                         />
                         <label htmlFor="inStock" className="ml-2 text-sm">
-                            {formData.inStock ? "In Stock" : "Out of Stock"}
+                            {formData.quantity > 0 ? "In Stock" : "Out of Stock"}
                         </label>
+
                     </div>
 
                     <div className="flex justify-end space-x-3 mt-6">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             disabled={isSubmitting}
                             className="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 transition-colors disabled:opacity-50"
                         >
@@ -184,7 +204,7 @@ export const CreateModal = ({ isOpen, onClose, onCreate }: CreateModalProps) => 
                             className={`px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""
                                 }`}
                         >
-                            {isSubmitting ? "Creating..." : "Create Product"}
+                            {isSubmitting ? "Saving..." : "Save"}
                         </button>
                     </div>
                 </form>

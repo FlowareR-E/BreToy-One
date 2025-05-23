@@ -12,11 +12,18 @@ export const ProductServices = {
     },
 
     async update(id: number, product: Omit<Product, "id">): Promise<Product> {
+        console.log(product)
         return apiClient.put(`/products/${id}`, product);
     },
 
     async delete(id: number): Promise<void>{
         return apiClient.delete(`/products/${id}`);
+    },
+
+    async toggleStock(id:number, inStock: boolean): Promise<void>{
+
+        if(inStock) return apiClient.put(`/products/${id}/instock`)
+        else        return apiClient.post(`/products/${id}/outofstock`)
     }
 }
 

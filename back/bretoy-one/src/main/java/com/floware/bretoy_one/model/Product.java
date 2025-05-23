@@ -85,4 +85,17 @@ public class Product {
         this.updateDate = LocalDateTime.now();
     }
     //endregion
+
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", category='" + category + '\'' +
+                ", price=" + price +
+                ", quantity=" + quantity +
+                ", inStock=" + inStock +
+                '}';
+    }
 }

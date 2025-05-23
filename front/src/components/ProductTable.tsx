@@ -2,12 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaSyncAlt, FaPlus } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
-import { multiSortData, type SortConfig, type SortDirection } from "../utils/SortUtils";
+import { multiSortData, type SortConfig, type SortDirection } from "../utils/sortUtils";
 import { ConfimationModal } from "./ConfirmationModal";
-import { CreateModal } from "./CreateModal";
+import { ProductModal } from "./ProductModal";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
 
 type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price" | "inStock">;
+type ConfirmationModalAction = '' | 'delete' | 'toggleStock';
+
+type ConfirmationModalState = {
+	isOpen: boolean;
+	productToDelete: Product | null, 
+	productToToggleStock: Product | null, 
+	actionType: ConfirmationModalAction
+}
 
 
 interface ProductTableProps {
@@ -17,12 +25,39 @@ interface ProductTableProps {
 
 export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTableProps) => {
 	const [products, setProducts] = useState<Product[]>([]);
-	const { fetchProducts, deleteProduct, createProduct, loading, error } = useProducts();
+	const { fetchProducts, deleteProduct, updateProduct, createProduct, toggleStock, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
-	const [confirmationModalState, setConfirmationModalState] = useState({
+	const [editModalState, setEditModalState] = useState<{
+		isOpen: boolean; product: Product | null }>({ isOpen: false,  product : null });
+
+	const [confirmationModalState, setConfirmationModalState] = useState<ConfirmationModalState>({
 		isOpen: false,
 		productToDelete: null as Product | null,
+		productToToggleStock: null as Product | null,
+		actionType: ''
 	})
+
+	const handleEditClick = (product: Product) => {
+		setEditModalState({
+			isOpen: true, 
+			product
+		})
+	}
+
+	const handleUpdateProduct = async (productData: Omit<Product, "id">) => {
+		if(!editModalState.product?.id) return;
+
+		try{
+			await updateProduct(editModalState.product.id, productData);
+			const updatedProducts = await fetchProducts();
+			setProducts(updatedProducts);
+			setEditModalState({ isOpen: false, product: null})
+		} catch (err){
+			console.error("Error updating product: " + err)
+			throw err;
+		}
+
+	}
 
 	const [pagination, setPagination] = useState({
 		currentPage: 1,
@@ -93,8 +128,38 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 		setConfirmationModalState({
 			isOpen: true,
 			productToDelete: product,
-		})
-	};
+			productToToggleStock: null,
+			actionType: 'delete'
+	});
+	}
+
+	const handleToggleStockClick = (product: Product) => {
+		setConfirmationModalState({isOpen: true, productToToggleStock: product, productToDelete : null, actionType : "toggleStock"})
+	}
+
+	const handleConfirm = () => {
+		if(confirmationModalState.actionType === 'delete'){
+			handleConfirmDelete();
+		} else if(confirmationModalState.actionType === 'toggleStock'){
+			handleConfirmToggleStock();
+		}
+	}
+	const handleConfirmToggleStock = async () => {
+		if(!confirmationModalState.productToToggleStock?.id) return;
+
+		try {
+			await toggleStock(confirmationModalState.productToToggleStock.id, !confirmationModalState.productToToggleStock.inStock)
+			const updatedProducts = await fetchProducts();
+			setProducts(updatedProducts);
+		} finally {
+			setConfirmationModalState({
+				isOpen: false,
+				productToDelete: null, 
+				productToToggleStock: null, 
+				actionType: ''
+			})
+		}
+	}
 
 	const handleConfirmDelete = async () => {
 		if (!confirmationModalState.productToDelete?.id) return;
@@ -102,11 +167,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 		await deleteProduct(confirmationModalState.productToDelete.id);
 		const updatedProducts = await fetchProducts();
 		setProducts(updatedProducts);
-		setConfirmationModalState({ isOpen: false, productToDelete: null });
+		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: '' });
 	};
 
 	const handleCloseConfirmationModal = () => {
-		setConfirmationModalState({ isOpen: false, productToDelete: null });
+		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: ''  });
 	};
 
 	const requestSort = (key: SortableField, event: React.MouseEvent) => {
@@ -173,17 +238,29 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 			<ConfimationModal
 				isOpen={confirmationModalState.isOpen}
 				onClose={handleCloseConfirmationModal}
-				onConfirm={handleConfirmDelete}
-				title="Delete Product"
-				message={`Are you sure you want to delete "${confirmationModalState.productToDelete?.name}?"`}
-				confirmText="Delete"
+				onConfirm={handleConfirm}
+				title= {confirmationModalState.actionType === 'delete' ? 'Delete Product' : 'Update Stock Status'}
+				message={confirmationModalState.actionType === 'delete'? 
+					`Are you sure you want to delete "${confirmationModalState.productToDelete?.name}?"` :
+					`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.inStock ? "Out of Stock" : "In Stock"}"`
+				}
+				confirmText={confirmationModalState.actionType === 'delete' ? 'Delete' : 'Update'}
 				danger={true}
 			/>
 
-			<CreateModal
+			<ProductModal
 				isOpen={createModalState}
 				onClose={() => setCreateModalState(false)}
-				onCreate={handleCreateProduct}
+				onSubmit={handleCreateProduct}
+				title="Add new Product"
+			/>
+
+			<ProductModal
+				isOpen={editModalState.isOpen}
+				onClose={() => setEditModalState({isOpen: false, product: null})}
+				onSubmit={handleUpdateProduct}
+				title="Edit a product"
+				initialData={editModalState.product}
 			/>
 
 			<div className="h-12 bg-gray-700 rounded-lg mb-3 flex items-center justify-between px-4">
@@ -260,12 +337,17 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 							<div className="col-span-1 text-center">{item.quantity}</div>
 							<div className="col-span-2 text-center">${item.price.toFixed(2)}</div>
 							<div className="col-span-2 text-center">
-								<span className={`px-2 py-1 rounded-full text-xs ${item.inStock ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"}`}
+								<span 
+									onClick={() => handleToggleStockClick(item)}
+									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.inStock ? "bg-green-900 hover:bg-green-700 text-green-300" : "bg-red-900 hover:bg-red-700 text-red-300"}`}
 								> {item.inStock ? "In Stock" : "Out of Stock"}
 								</span>
 							</div>
 							<div className="col-span-1 flex justify-center space-x-2">
-								<button className="p-1 text-gray-400 hover:text-indigo-400 transition-colors">
+								<button 
+									className="p-1 text-gray-400 hover:text-indigo-400 transition-colors"
+									onClick={()=> handleEditClick(item)}
+								>
 									<FaEdit />
 								</button>
 								<button
@@ -309,10 +391,16 @@ export const ProductTable = ({ activeFilters, onProductsLoaded} : ProductTablePr
 
 						<div className="flex justify-end space-x-3 mt-3">
 							<button className="flex items-center text-sm text-indigo-400">
-								<FaEdit className="mr-1" /> Edit
+								<FaEdit 
+									className="mr-1" 
+									onClick={()=> handleEditClick(item)}
+									/> Edit
 							</button>
 							<button className="flex items-center text-sm text-red-400">
-								<FaTrash className="mr-1" /> Delete
+								<FaTrash 
+									className="mr-1" 
+									onClick={() => handleDeleteClick(item)}
+								/> Delete
 							</button>
 						</div>
 					</div>
