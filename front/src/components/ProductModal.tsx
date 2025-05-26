@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Product } from "../api/types/product";
 
 type ProductModalProps = {
@@ -7,9 +7,10 @@ type ProductModalProps = {
     onSubmit: (product: Omit<Product, "id">) => Promise<void>;
     title: string;
     initialData?: Omit<Product, "id"> | null
+    categories?: string[];
 };
 
-export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initialData }: ProductModalProps) => {
+export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initialData, categories }: ProductModalProps) => {
 
     const [formData, setFormData] = useState<Omit<Product, "id">>({
         name: "",
@@ -18,7 +19,8 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
         quantity: 0,
         ...initialData
     });
-
+    const [isCustomCategory, setIsCustomCategory] = useState(false);
+    const customCategoryRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,16 +30,35 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
         }
     }, [initialData])
 
+    useEffect(() => {
+        if (isCustomCategory) {
+            customCategoryRef.current?.focus();
+        }
+    }, [isCustomCategory]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
+        if (name === "categorySelect") {
+            if (value === "__custom__") {
+                setIsCustomCategory(true);
+                setFormData(prev => ({ ...prev, category: "" }));
+            } else {
+                setIsCustomCategory(false);
+                setFormData(prev => ({ ...prev, category: value }));
+            }
+            return;
+        }
 
         setFormData(prev => ({
             ...prev,
             [name]: name === "price" || name === "quantity"
-                ? value === "" ? 0 : Number(value) 
+                ? value === "" ? 0 : Number(value)
                 : value
         }));
     };
+
+
 
 
     const validate = () => {
@@ -82,6 +103,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
             quantity: 0,
         });
         setErrors({})
+        setIsCustomCategory(false);
         onClose();
     }
 
@@ -116,20 +138,43 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                         <label htmlFor="category" className="block text-sm font-medium mb-1">
                             Category *
                         </label>
-                        <input
-                            id="category"
-                            name="category"
-                            type="text"
-                            value={formData.category}
-                            onChange={handleChange}
-                            className={`w-full bg-gray-700 border ${errors.category ? "border-red-500" : "border-gray-600"
-                                } rounded-md px-3 py-2 text-sm`}
-                            placeholder="Enter category"
-                        />
+
+                        {!isCustomCategory ? (
+                            <select
+                                id="categorySelect"
+                                name="categorySelect"
+                                value={formData.category || ""}
+                                onChange={handleChange}
+                                className={`w-full bg-gray-700 border ${errors.category ? "border-red-500" : "border-gray-600"} rounded-md px-3 py-2 text-sm`}
+                            >
+                                <option value="">Select a category</option>
+                                {categories?.map(cat => (
+                                    <option key={cat} value={cat}>
+                                        {cat}
+                                    </option>
+                                ))}
+                                <option value="__custom__">+ Add custom category</option>
+                            </select>
+                        ) : (
+                            <input
+                                id="category"
+                                name="category"
+                                type="text"
+                                ref={customCategoryRef}
+                                value={formData.category}
+                                onChange={handleChange}
+                                className={`w-full bg-gray-700 border ${errors.category ? "border-red-500" : "border-gray-600"} rounded-md px-3 py-2 text-sm`}
+                                placeholder="Enter custom category"
+                            />
+                        )}
+
                         {errors.category && (
                             <p className="mt-1 text-sm text-red-400">{errors.category}</p>
                         )}
                     </div>
+
+
+
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>

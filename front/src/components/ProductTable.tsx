@@ -20,10 +20,11 @@ type ConfirmationModalState = {
 
 interface ProductTableProps {
 	activeFilters: ProductFilter;
+	categories: string[];
 	onProductsLoaded?: (products: Product[]) => void
 }
 
-export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTableProps) => {
+export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: ProductTableProps) => {
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, deleteProduct, updateProduct, createProduct, toggleStock, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
@@ -169,6 +170,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 
 	const handleCloseConfirmationModal = () => {
 		setConfirmationModalState({ isOpen: false, productToDelete: null, productToToggleStock: null, actionType: '' });
+		handleFetchProducts();
 	};
 
 	const requestSort = (key: SortableField, event: React.MouseEvent) => {
@@ -239,7 +241,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 				title={confirmationModalState.actionType === 'delete' ? 'Delete Product' : 'Update Stock Status'}
 				message={confirmationModalState.actionType === 'delete' ?
 					`Are you sure you want to delete "${confirmationModalState.productToDelete?.name}?"` :
-					`Do you want to mark "${confirmationModalState.productToToggleStock?.name} as ${confirmationModalState.productToToggleStock?.quantity ?? 0 > 0 ? "Out of Stock" : "In Stock"
+					`Do you want to mark: "${confirmationModalState.productToToggleStock?.name}" as "${confirmationModalState.productToToggleStock?.quantity ?? 0 > 0 ? "Out of Stock" : "In Stock"
 					}"`}
 				confirmText={confirmationModalState.actionType === 'delete' ? 'Delete' : 'Update'}
 				danger={true}
@@ -250,6 +252,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 				onClose={() => setCreateModalState(false)}
 				onSubmit={handleCreateProduct}
 				title="Add new Product"
+				categories={categories}
 			/>
 
 			<ProductModal
@@ -258,6 +261,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 				onSubmit={handleUpdateProduct}
 				title="Edit a product"
 				initialData={editModalState.product}
+				categories={categories}
 			/>
 
 			<div className="h-12 bg-gray-700 rounded-lg mb-3 flex items-center justify-between px-4">
