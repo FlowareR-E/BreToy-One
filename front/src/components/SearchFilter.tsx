@@ -51,6 +51,7 @@ export const SearchFilter = ({ onFilterChange, categories }: SearchFilterProps) 
                 <input
                     type="text"
                     value={localFilters.name}
+                    maxLength={120}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-gray-400"
                     placeholder="Search products..."
                     onChange={(e) => setLocalFilters(prev => ({ ...prev, name: e.target.value }))}
