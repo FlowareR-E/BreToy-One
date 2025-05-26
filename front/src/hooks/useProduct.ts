@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ProductServices } from "../api/productApi";
-import type { Product } from "../api/types/product";
+import type { InventoryMetrics, Product } from "../api/types/product";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
 
 export const useProducts = () => {
@@ -8,12 +8,14 @@ export const useProducts = () => {
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<ProductFilter>({});
     const [products, setProducts] = useState<Product[]>([]);
+    const [metrics, setMetrics] = useState<InventoryMetrics | null>(null); 
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
             const data = await ProductServices.getAll();
             setProducts(data);
+            await fetchMetrics();
             return data;
         } catch (err) {
             setError(err instanceof Error ? err.message : "API Error");
@@ -83,15 +85,36 @@ export const useProducts = () => {
         }
     }
 
+    const fetchMetrics = async () => {
+        try {
+            setLoading(true);
+            const metrics = await ProductServices.getMetrics();
+            setMetrics(metrics);
+            return metrics;
+        }
+        catch (err) {
+            setError(err instanceof Error ? err.message : "API Error");
+            throw err;
+        }
+        finally {
+            setLoading(false);
+        }
+    }
+
+    
+
     return {
         fetchProducts, 
         createProduct, 
         updateProduct,
         deleteProduct,
+        fetchMetrics,
         toggleStock,
         applyFilters, 
         clearFilters,
         filteredProducts,
+        products,
+        metrics, 
         activeFilters : filters,
         loading, 
         error
