@@ -89,7 +89,6 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 				...prev,
 				totalItems: data.length,
 			}));
-			console.log("Products loaded:", data);
 			onProductsLoaded?.(data);
 		};
 		loadProducts();
@@ -232,7 +231,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 
 
 		<div className="bg-gray-800 rounded-xl shadow-lg shadow-black/30 overflow-hidden">
-			{/* Confirmation nodal*/}
+
 			<ConfimationModal
 				isOpen={confirmationModalState.isOpen}
 				onClose={handleCloseConfirmationModal}
@@ -264,12 +263,6 @@ export const ProductTable = ({ activeFilters, onProductsLoaded }: ProductTablePr
 			<div className="h-12 bg-gray-700 rounded-lg mb-3 flex items-center justify-between px-4">
 				<h2 className="text-lg font-semibold hidden md:block">Products</h2>
 				<div className="flex justify-between w-full md:w-auto md:space-x-3">
-					<button
-						onClick={() => handleFetchProducts()}
-						className="flex items-center p-1.5 md:px-3 md:py-1.5 text-gray-50 bg-gray-600 hover:bg-gray-500 rounded-md text-sm transition-colors"
-					>
-						<FaSyncAlt className="mr-2" /> Refresh
-					</button>
 					<button
 						onClick={() => setCreateModalState(true)}
 						className="flex items-center p-1.5 md:px-3 md:py-1.5 bg-indigo-600 text-gray-50 hover:bg-indigo-500 rounded-md text-sm transition-colors"

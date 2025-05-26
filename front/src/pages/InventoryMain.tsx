@@ -5,13 +5,14 @@ import { useState } from "react";
 import type { ProductFilter } from "../utils/filterUtils";
 import { getCategories } from "../utils/productUtils";
 import type { Product } from "../api/types/product";
+import { MetricChart } from "../components/MetricChart";
 
 
 export const InventoryMain = () => {
   const [activeFilters, setActiveFilters] = useState<ProductFilter>({});
-  const [categories, setCategories ] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  const handleProductsLoaded = (products: Product[])=> {
+  const handleProductsLoaded = (products: Product[]) => {
     setCategories(getCategories(products));
   }
 
@@ -31,12 +32,12 @@ export const InventoryMain = () => {
 
         {/* Body */}
         <div className="max-w-4xl mx-auto ">
-          
+
           {/* Search Section */}
-          <SearchFilter 
+          <SearchFilter
             onFilterChange={setActiveFilters}
             categories={categories}
-            />
+          />
 
           {/* Table Section */}
           <div className="bg-gray-800 rounded-xl shadow-lg  mt-5 shadow-black/30 overflow-hidden">
@@ -44,8 +45,13 @@ export const InventoryMain = () => {
               <ProductTable
                 activeFilters={activeFilters}
                 onProductsLoaded={handleProductsLoaded}
-                />
+              />
             </div>
+          </div>
+
+          {/* Metrics Section */}
+          <div>
+            <MetricChart/>
           </div>
         </div>
       </div>

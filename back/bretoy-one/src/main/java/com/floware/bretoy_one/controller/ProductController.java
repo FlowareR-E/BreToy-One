@@ -5,6 +5,7 @@ import com.floware.bretoy_one.services.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import payload.InventoryMetricsResponse;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +25,14 @@ public class ProductController {
         System.out.println("[GET] /api/products - Fetching all products");
         List<Product> products = service.getAllProducts();
         return ResponseEntity.ok(products);
+    }
+    @GetMapping("/metrics")
+    public ResponseEntity<InventoryMetricsResponse> GetMetrics(){
+        System.out.println("[GET] /api/products/metrics - Fetching all metrics");
+        InventoryMetricsResponse metrics = service.getAllMetrics();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(metrics);
     }
 
     @PostMapping

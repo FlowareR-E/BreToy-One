@@ -1,5 +1,5 @@
 import apiClient from "./axiosConfig";
-import type { Product } from "./types/product";
+import type { InventoryMetrics, Product } from "./types/product";
 
 export const ProductServices = {
 
@@ -23,6 +23,10 @@ export const ProductServices = {
 
         if(inStock) return apiClient.put(`/products/${id}/instock`)
         else        return apiClient.post(`/products/${id}/outofstock`)
+    }, 
+    
+    async getMetrics(): Promise<InventoryMetrics> {
+        return apiClient.get('/products/metrics');
     }
 }
 
