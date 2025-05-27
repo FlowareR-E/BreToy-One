@@ -51,8 +51,10 @@ export const InventoryMain = () => {
           </div>
 
           {/* Metrics Section */}
-          <div>
-            <MetricChart/>
+          <div className="bg-gray-800 rounded-xl shadow-lg  mt-5 shadow-black/30 overflow-hidden">
+            <div className="p-4 text-center text-gray-500">
+              <MetricChart />
+            </div>
           </div>
         </div>
       </div>

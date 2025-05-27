@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaSyncAlt, FaPlus } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaPlus } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
 import { multiSortData, type SortConfig, type SortDirection } from "../utils/sortUtils";
 import { ConfimationModal } from "./ConfirmationModal";
 import { ProductModal } from "./ProductModal";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
+import React from "react";
 
 type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price">;
 type ConfirmationModalAction = '' | 'delete' | 'toggleStock';
@@ -28,6 +29,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	const [products, setProducts] = useState<Product[]>([]);
 	const { fetchProducts, deleteProduct, updateProduct, createProduct, toggleStock, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
+	const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
 	const [editModalState, setEditModalState] = useState<{
 		isOpen: boolean; product: Product | null
 	}>({ isOpen: false, product: null });
@@ -38,6 +40,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 		productToToggleStock: null as Product | null,
 		actionType: ''
 	})
+
+	const handleToggleExpand = (id: number) => {
+		setExpandedProductId(prev => (prev === id ? null : id));
+	};
+
 
 	const handleEditClick = (product: Product) => {
 		setEditModalState({
@@ -284,6 +291,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 					>ID {getSortIcon('id')}
 						{getSortPriority("id") && (<span className="ml-1 text-xs text-indigo-300"> {getSortPriority("id")}</span>)}
 					</div>
+
 					<div
 						className="col-span-3 font-medium flex items-center justify-center cursor-pointer hover:text-indigo-300"
 						onClick={(e) => requestSort("name", e)}
@@ -319,44 +327,65 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 
 				{/* Desktop Body */}
 				<div className="divide-y divide-gray-700">
-					{getPaginatedData().map((item, index) => (
-						<div
-							key={index}
-							className="grid grid-cols-12 p-4 items-center hover:bg-gray-750 transition-colors"
-						>
-							<div className="col-span-1 text-indigo-400 font-mono">{item.id}</div>
-							<div className="col-span-3 truncate">{item.name}</div>
-							<div className="col-span-2 text-gray-400">{item.category}</div>
-							<div className="col-span-1 text-center">{item.quantity}</div>
-							<div className="col-span-2 text-center">${item.price.toFixed(2)}</div>
-							<div className="col-span-2 text-center">
-								<span
-									onClick={() => handleToggleStockClick(item)}
-									className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity > 0 ? (item.quantity > 10 ?
-										 "bg-green-900 text-green-300" : "bg-yellow-900 hover:bg-yellow-700 text-yellow-300") : 
-										 "bg-red-900 hover:bg-red-700 text-red-300"}`}
-								> {item.quantity > 0 ? (item.quantity > 10 ? "In Stock " : "Low Stock") : "Out of Stock"}
-								</span>
+					{getPaginatedData().map((item) => (
+						<React.Fragment key={item.id}>
+							<div
+								key={item.id}
+								className="grid grid-cols-12 p-4 items-center hover:bg-gray-750 transition-colors"
+							>
+								<div
+									className="col-span-1 text-indigo-400 font-mono cursor-pointer hover:underline text-center"
+									onClick={() => handleToggleExpand(item.id!)}
+								>
+									{item.id}
+								</div>
+								<div className="col-span-3 truncate">{item.name}</div>
+								<div className="col-span-2 text-gray-400">{item.category}</div>
+								<div className="col-span-1 text-center">{item.quantity}</div>
+								<div className="col-span-2 text-center">${item.price.toFixed(2)}</div>
+								<div className="col-span-2 text-center">
+									<span
+										onClick={() => handleToggleStockClick(item)}
+										className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity > 0
+											? item.quantity > 10
+												? "bg-green-900 text-green-300"
+												: "bg-yellow-900 hover:bg-yellow-700 text-yellow-300"
+											: "bg-red-900 hover:bg-red-700 text-red-300"
+											}`}
+									>
+										{item.quantity > 0
+											? item.quantity > 10
+												? "In Stock "
+												: "Low Stock"
+											: "Out of Stock"}
+									</span>
+								</div>
+								<div className="col-span-1 flex justify-center space-x-2">
+									<button
+										className="p-1 text-gray-400 hover:text-indigo-400 transition-colors"
+										onClick={() => handleEditClick(item)}
+									>
+										<FaEdit />
+									</button>
+									<button
+										className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+										onClick={() => handleDeleteClick(item)}
+									>
+										<FaTrash />
+									</button>
+								</div>
+							</div>
 
-							
-							</div>
-							<div className="col-span-1 flex justify-center space-x-2">
-								<button
-									className="p-1 text-gray-400 hover:text-indigo-400 transition-colors"
-									onClick={() => handleEditClick(item)}
-								>
-									<FaEdit />
-								</button>
-								<button
-									className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-									onClick={() => handleDeleteClick(item)}
-								>
-									<FaTrash />
-								</button>
-							</div>
-						</div>
+							{expandedProductId === item.id && (
+								<div className="col-span-12 bg-gray-750 text-sm text-gray-400 px-4 py-2 rounded-b">
+									<p>Created: {new Date(item.creationDate ?? "").toLocaleString()}</p>
+									<p>Last Updated: {new Date(item.updateDate ?? "").toLocaleString()}</p>
+								</div>
+							)}
+						</React.Fragment>
 					))}
 				</div>
+
 			</div>
 
 			{/* Mobile Cards */}
@@ -366,8 +395,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 						<div className="flex justify-between items-start mb-2">
 							<div className="text-indigo-400 font-mono">ID: {item.id}</div>
 							<span className={`px-2 py-1 rounded-full text-xs ${item.quantity > 0
-									? (item.quantity > 10 ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300")
-									: "bg-red-900 text-red-300"
+								? (item.quantity > 10 ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300")
+								: "bg-red-900 text-red-300"
 								}`}>
 								{item.quantity > 0 ? "In Stock" : "Out of Stock"}
 							</span>
@@ -475,7 +504,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 					<button
 						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						onClick={() => handlePageChange(pagination.currentPage + 1)}
-						disabled={pagination.currentPage === totalPages}
+						disabled={pagination.currentPage === totalPages || totalPages === 0}
 					>
 						<FaChevronRight />
 					</button>

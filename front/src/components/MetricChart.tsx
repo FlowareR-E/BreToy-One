@@ -34,12 +34,28 @@ export const MetricChart: React.FC = () => {
     getMetrics();
   }, []);
 
-  if (!metrics || loading) {
-    return <p className="text-gray-400">Loading metrics...</p>;
+  if (!metrics) {
+    return <p className="p-8 text-center text-red-400 ">Cannot fetch from API</p>;
   }
+
+  if (loading) {
+    return <p className="p-8 text-center  text-gray-400">Loading metrics</p>;
+  }
+
 
   const categories = metrics.metricsByCategory.map((item) => item.category);
 
+  const totalValueByCategoryData = {
+    labels: categories,
+    datasets: [
+      {
+        label: 'Total Value',
+        data: metrics.metricsByCategory.map(item => item.totalInventoryValue), // assumes this field exists
+        backgroundColor: '#FBBF24',
+      },
+    ],
+  };
+  
   const stockByCategoryData = {
     labels: categories,
     datasets: [
@@ -49,8 +65,8 @@ export const MetricChart: React.FC = () => {
         backgroundColor: '#34D399',
       },
     ],
-  }; 
-   const getColor = (index: number) => {
+  };
+  const getColor = (index: number) => {
     const colors = ['#60A5FA', '#FBBF24', '#34D399', '#F87171', '#A78BFA'];
     return colors[index % colors.length];
   };
@@ -63,12 +79,12 @@ export const MetricChart: React.FC = () => {
       backgroundColor: getColor(index),
     })),
   };
-  
 
-  
+
+
 
   return (
-    <div className="mt-8 bg-gray-800 rounded-xl shadow-lg p-6 text-white">
+    <div className=" bg-gray-800 rounded-xl shadow-lg p-6 text-white">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Metrics</h2>
         <button
@@ -127,6 +143,35 @@ export const MetricChart: React.FC = () => {
           />
         </div>
       </div>
+
+      <div className="md:col-span-2 mt-5 md:mt-6">
+            <h3 className="text-lg font-semibold mb-2">Inventory Value by Category</h3>
+            <Bar
+              data={totalValueByCategoryData}
+              options={{
+                responsive: true,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (value) => `$${Number(value).toLocaleString()}`,
+                    },
+                  },
+                },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: (context) =>
+                        `Total Value: $${context.parsed.y.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
     </div>
   );
 };

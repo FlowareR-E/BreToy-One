@@ -36,9 +36,13 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
         }
     }, [isCustomCategory]);
 
+    const MAX_VALUE = 999999;
+    const MIN_PRICE = 0;
+    const MIN_QUANTITY = 0;
+    
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-
+    
         if (name === "categorySelect") {
             if (value === "__custom__") {
                 setIsCustomCategory(true);
@@ -49,16 +53,25 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
             }
             return;
         }
-
+    
+        if (name === "price" || name === "quantity") {
+            const numericValue = value === "" ? 0 : Number(value);
+    
+            const clampedValue = Math.min(Math.max(numericValue, name === "price" ? MIN_PRICE : MIN_QUANTITY), MAX_VALUE);
+    
+            setFormData(prev => ({
+                ...prev,
+                [name]: clampedValue,
+            }));
+            return;
+        }
+    
         setFormData(prev => ({
             ...prev,
-            [name]: name === "price" || name === "quantity"
-                ? value === "" ? 0 : Number(value)
-                : value
+            [name]: value
         }));
     };
-
-
+    
 
 
     const validate = () => {
@@ -123,6 +136,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                             id="name"
                             name="name"
                             type="text"
+                            maxLength={120}
                             value={formData.name}
                             onChange={handleChange}
                             className={`w-full bg-gray-700 border ${errors.name ? "border-red-500" : "border-gray-600"
@@ -160,6 +174,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                                 id="category"
                                 name="category"
                                 type="text"
+                                maxLength={120}
                                 ref={customCategoryRef}
                                 value={formData.category}
                                 onChange={handleChange}
@@ -187,7 +202,8 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                                     id="price"
                                     name="price"
                                     type="number"
-                                    min="0.01"
+                                    min="0"
+                                    max="999999"
                                     step="0.01"
                                     value={formData.price === 0 ? "" : formData.price}
                                     onChange={handleChange}
@@ -209,6 +225,8 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                                 name="quantity"
                                 type="number"
                                 min="0"
+                                max="999999"
+                                step="1"                                
                                 value={formData.quantity}
                                 onChange={handleChange}
                                 className={`w-full bg-gray-700 border ${errors.quantity ? "border-red-500" : "border-gray-600"
