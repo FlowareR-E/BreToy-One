@@ -23,7 +23,16 @@ public class ProductRepository {
             products.add(product);
         }
         else {
-            products.replaceAll(p -> p.getId() == product.getId() ? product : p);
+            products.replaceAll(p-> {
+                if(p.getId() == product.getId()){
+                    p.setName(product.getName());
+                    p.setCategory(product.getCategory());
+                    p.setQuantity(product.getQuantity());
+                    p.setPrice(product.getPrice());
+                }
+                return p;
+            }
+            );
         }
         return product;
     }

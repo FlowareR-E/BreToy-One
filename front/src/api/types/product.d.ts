@@ -4,7 +4,8 @@ export interface Product {
     price: number;
     quantity: number;
     category?: string;
-    lastUpdated?: string;
+    updateDate?: string;
+    creationDate?: string;
 }
 
 export interface InventoryMetrics {
