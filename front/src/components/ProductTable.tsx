@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaSyncAlt, FaPlus } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown, FaPlus } from "react-icons/fa";
 import { useProducts } from "../hooks/useProduct";
 import type { Product } from "../api/types/product";
 import { multiSortData, type SortConfig, type SortDirection } from "../utils/sortUtils";
 import { ConfimationModal } from "./ConfirmationModal";
 import { ProductModal } from "./ProductModal";
 import { filterProducts, type ProductFilter } from "../utils/filterUtils";
+import React from "react";
 
 type SortableField = keyof Pick<Product, "id" | "name" | "category" | "quantity" | "price">;
 type ConfirmationModalAction = '' | 'delete' | 'toggleStock';
@@ -326,8 +327,8 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 
 				{/* Desktop Body */}
 				<div className="divide-y divide-gray-700">
-					{getPaginatedData().map((item, index) => (
-						<>
+					{getPaginatedData().map((item) => (
+						<React.Fragment key={item.id}>
 							<div
 								key={item.id}
 								className="grid grid-cols-12 p-4 items-center hover:bg-gray-750 transition-colors"
@@ -346,10 +347,10 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 									<span
 										onClick={() => handleToggleStockClick(item)}
 										className={`px-2 py-1 cursor-pointer rounded-full text-xs ${item.quantity > 0
-												? item.quantity > 10
-													? "bg-green-900 text-green-300"
-													: "bg-yellow-900 hover:bg-yellow-700 text-yellow-300"
-												: "bg-red-900 hover:bg-red-700 text-red-300"
+											? item.quantity > 10
+												? "bg-green-900 text-green-300"
+												: "bg-yellow-900 hover:bg-yellow-700 text-yellow-300"
+											: "bg-red-900 hover:bg-red-700 text-red-300"
 											}`}
 									>
 										{item.quantity > 0
@@ -381,7 +382,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 									<p>Last Updated: {new Date(item.updateDate ?? "").toLocaleString()}</p>
 								</div>
 							)}
-						</>
+						</React.Fragment>
 					))}
 				</div>
 
@@ -503,7 +504,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 					<button
 						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						onClick={() => handlePageChange(pagination.currentPage + 1)}
-						disabled={pagination.currentPage === totalPages}
+						disabled={pagination.currentPage === totalPages || totalPages === 0}
 					>
 						<FaChevronRight />
 					</button>
