@@ -18,7 +18,6 @@ type ConfirmationModalState = {
 	actionType: ConfirmationModalAction
 }
 
-
 interface ProductTableProps {
 	activeFilters: ProductFilter;
 	categories: string[];
@@ -30,21 +29,18 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	const { fetchProducts, deleteProduct, updateProduct, createProduct, toggleStock, loading, error } = useProducts();
 	const [createModalState, setCreateModalState] = useState(false);
 	const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-	const [editModalState, setEditModalState] = useState<{
-		isOpen: boolean; product: Product | null
-	}>({ isOpen: false, product: null });
+	const [editModalState, setEditModalState] = useState<{ isOpen: boolean; product: Product | null }>({ isOpen: false, product: null });
 
 	const [confirmationModalState, setConfirmationModalState] = useState<ConfirmationModalState>({
 		isOpen: false,
-		productToDelete: null as Product | null,
-		productToToggleStock: null as Product | null,
+		productToDelete: null,
+		productToToggleStock: null,
 		actionType: ''
 	})
 
 	const handleToggleExpand = (id: number) => {
 		setExpandedProductId(prev => (prev === id ? null : id));
 	};
-
 
 	const handleEditClick = (product: Product) => {
 		setEditModalState({
@@ -64,7 +60,6 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 			console.error("Error updating product: " + err)
 			throw err;
 		}
-
 	}
 
 	const [pagination, setPagination] = useState({
@@ -72,6 +67,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 		itemsPerPage: 10,
 		totalItems: 0
 	})
+
 	const [sortConfigs, setSortConfigs] = useState<SortConfig<Product>[]>([]);
 
 	useEffect(() => {
@@ -79,10 +75,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	}, []);
 
 	useEffect(() => {
-		setPagination(prev => ({
-			...prev,
-			currentPage: 1
-		}))
+		setPagination(prev => ({ ...prev, currentPage: 1 }))
 	}, [activeFilters])
 
 	useEffect(() => {
@@ -90,18 +83,23 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	}, [sortConfigs])
 
 	const handleFetchProducts = async () => {
-		const loadProducts = async () => {
-			const data = await fetchProducts();
-			setProducts(data);
-			setPagination(prev => ({
-				...prev,
-				totalItems: data.length,
-			}));
-			onProductsLoaded?.(data);
-		};
-		loadProducts();
+		const data = await fetchProducts();
+		setProducts(data);
+		setPagination(prev => ({
+			...prev,
+			totalItems: data.length,
+		}));
+		onProductsLoaded?.(data);
 	}
 
+	const filteredAndSortedProducts = useMemo(() => {
+		const filtered = filterProducts(products, activeFilters);
+		return sortConfigs.length > 0 ? multiSortData(filtered, sortConfigs) : filtered;
+	}, [products, activeFilters, sortConfigs])
+
+	useEffect(() => {
+		setPagination(prev => ({ ...prev, totalItems: filteredAndSortedProducts.length }))
+	}, [filteredAndSortedProducts]);
 
 	const getPaginatedData = () => {
 		const { currentPage, itemsPerPage } = pagination;
@@ -111,6 +109,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	};
 
 	const handlePageChange = (newPage: number) => {
+		if (newPage < 1 || newPage > totalPages) return;
 		setPagination(prev => ({
 			...prev,
 			currentPage: newPage
@@ -118,7 +117,6 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	};
 
 	const totalPages = Math.ceil(pagination.totalItems / pagination.itemsPerPage);
-
 
 	const handleCreateProduct = async (productData: Omit<Product, "id">) => {
 		try {
@@ -131,7 +129,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 		}
 	}
 
-	const handleDeleteClick = async (product: Product) => {
+	const handleDeleteClick = (product: Product) => {
 		setConfirmationModalState({
 			isOpen: true,
 			productToDelete: product,
@@ -141,7 +139,12 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	}
 
 	const handleToggleStockClick = (product: Product) => {
-		setConfirmationModalState({ isOpen: true, productToToggleStock: product, productToDelete: null, actionType: "toggleStock" })
+		setConfirmationModalState({
+			isOpen: true,
+			productToToggleStock: product,
+			productToDelete: null,
+			actionType: "toggleStock"
+		})
 	}
 
 	const handleConfirm = () => {
@@ -151,6 +154,7 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 			handleConfirmToggleStock();
 		}
 	}
+
 	const handleConfirmToggleStock = async () => {
 		if (!confirmationModalState.productToToggleStock?.id) return;
 
@@ -204,21 +208,12 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 			return [{ key, direction: 'asc' as SortDirection }];
 		});
 	};
-	const filteredAndSortedProducts = useMemo(() => {
-		const filtered = filterProducts(products, activeFilters);
-		return sortConfigs.length > 0 ? multiSortData(filtered, sortConfigs) : filtered;
-	}, [products, activeFilters, sortConfigs])
-
-
-	useEffect(() => {
-		setPagination(prev => ({ ...prev, totalItems: filteredAndSortedProducts.length }))
-	}, [filteredAndSortedProducts]);
-
 
 	const getSortPriority = (key: SortableField) => {
 		const index = sortConfigs.findIndex(c => c.key === key);
 		return index >= 0 ? index + 1 : null;
 	}
+
 	const getSortIcon = (key: SortableField) => {
 		const config = sortConfigs.find(c => c.key === key);
 
@@ -228,7 +223,22 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 			: <FaSortDown className="ml-1 text-indigo-400" />
 	}
 
-
+	// Pagination helper: Generate visible page numbers for desktop pagination
+	const getVisiblePages = () => {
+		const pages: number[] = [];
+		if (totalPages <= 5) {
+			for (let i = 1; i <= totalPages; i++) pages.push(i);
+		} else {
+			if (pagination.currentPage <= 3) {
+				pages.push(1, 2, 3, 4, totalPages);
+			} else if (pagination.currentPage >= totalPages - 2) {
+				pages.push(1, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+			} else {
+				pages.push(1, pagination.currentPage - 1, pagination.currentPage, pagination.currentPage + 1, totalPages);
+			}
+		}
+		return pages;
+	};
 
 	if (loading && products.length === 0) {
 		return <div className="p-8 text-center">Loading...</div>;
@@ -237,8 +247,6 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 	if (error) return <div className="p-8 text-center text-red-400">Error: {error}</div>;
 
 	return (
-
-
 		<div className="bg-gray-800 rounded-xl shadow-lg shadow-black/30 overflow-hidden">
 
 			<ConfimationModal
@@ -273,12 +281,11 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 
 			<div className="h-12 bg-gray-700 rounded-lg mb-3 flex items-center justify-between px-4">
 				<h2 className="text-lg font-semibold hidden md:block">Products</h2>
-				<div className="flex justify-between w-full md:w-auto md:space-x-3">
+				<div className="flex md:justify-between justify-center w-full md:w-auto md:space-x-3">
 					<button
 						onClick={() => setCreateModalState(true)}
-						className="flex items-center p-1.5 md:px-3 md:py-1.5 bg-indigo-600 text-gray-50 hover:bg-indigo-500 rounded-md text-sm transition-colors"
-					>
-						<FaPlus className="mr-2" /> Add new
+						className="flex items-center justify-center p-1.5 md:px-3 md:py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-500 transition-colors">
+						<FaPlus className="mr-2" /> Add Product
 					</button>
 				</div>
 			</div>
@@ -432,112 +439,51 @@ export const ProductTable = ({ activeFilters, onProductsLoaded, categories }: Pr
 					</div>
 				))}
 			</div>
-
 			{/* Desktop Pagination */}
-			<div className="hidden md:flex items-center justify-between p-4 bg-gray-800 border-t border-gray-700">
-				<div className="text-sm text-gray-400">
-					Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to{' '}
-					{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of{' '}
-					{pagination.totalItems} items
-				</div>
-				<div className="flex space-x-2">
-					<button
-						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-						onClick={() => handlePageChange(pagination.currentPage - 1)}
-						disabled={pagination.currentPage === 1}
-					>
-						<FaChevronLeft />
-					</button>
+			<div className="hidden md:flex space-x-2 mt-6 justify-center items-center mb-5">
+				<button
+					className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					onClick={() => handlePageChange(pagination.currentPage - 1)}
+					disabled={pagination.currentPage === 1}
+				>
+					<FaChevronLeft />
+				</button>
 
-					{Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-						const page = i + 1;
+				{getVisiblePages().map((page, index, array) => {
+					if (index > 0 && page !== array[index - 1] + 1) {
 						return (
-							<button
-								key={page}
-								className={`w-10 h-10 rounded-md ${page === pagination.currentPage
-									? "bg-indigo-600 text-white"
-									: "bg-gray-700 hover:bg-gray-600"
-									} transition-colors`}
-								onClick={() => handlePageChange(page)}
-							>
-								{page}
-							</button>
+							<React.Fragment key={`ellipsis-${index}`}>
+								<div className="flex items-center px-2">...</div>
+								<button
+									className={`w-10 h-10 rounded-md ${pagination.currentPage === page ? "bg-indigo-600 text-white" : "bg-gray-700 hover:bg-gray-600"} transition-colors`}
+									onClick={() => handlePageChange(page)}
+								>
+									{page}
+								</button>
+							</React.Fragment>
 						);
-					})}
+					}
 
-					{totalPages > 3 && (
-						<>
-							{pagination.currentPage > 3 && pagination.currentPage < totalPages - 2 && (
-								<div className="flex items-center px-2">...</div>
-							)}
+					return (
+						<button
+							key={page}
+							className={`w-10 h-10 rounded-md ${pagination.currentPage === page ? "bg-indigo-600 text-white" : "bg-gray-700 hover:bg-gray-600"} transition-colors`}
+							onClick={() => handlePageChange(page)}
+						>
+							{page}
+						</button>
+					);
+				})}
 
-							{pagination.currentPage > 3 && (
-								<button
-									className={`w-10 h-10 rounded-md ${pagination.currentPage > 3 && pagination.currentPage < totalPages - 2
-										? "bg-indigo-600 text-white"
-										: "bg-gray-700 hover:bg-gray-600"
-										} transition-colors`}
-									onClick={() => handlePageChange(pagination.currentPage)}
-								>
-									{pagination.currentPage}
-								</button>
-							)}
-
-							{totalPages > 4 && pagination.currentPage < totalPages - 2 && (
-								<div className="flex items-center px-2">...</div>
-							)}
-
-							{totalPages > 3 && (
-								<button
-									className={`w-10 h-10 rounded-md ${pagination.currentPage === totalPages
-										? "bg-indigo-600 text-white"
-										: "bg-gray-700 hover:bg-gray-600"
-										} transition-colors`}
-									onClick={() => handlePageChange(totalPages)}
-								>
-									{totalPages}
-								</button>
-							)}
-						</>
-					)}
-
-					<button
-						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-						onClick={() => handlePageChange(pagination.currentPage + 1)}
-						disabled={pagination.currentPage === totalPages || totalPages === 0}
-					>
-						<FaChevronRight />
-					</button>
-				</div>
-			</div>
-
-			{/* Mobile Pagination */}
-			<div className="md:hidden flex items-center justify-between p-4 bg-gray-800 border-t border-gray-700">
-				<div className="text-sm text-gray-400">
-					Page {pagination.currentPage} of {totalPages}
-				</div>
-				<div className="flex space-x-2">
-					<button
-						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-						onClick={() => handlePageChange(pagination.currentPage - 1)}
-						disabled={pagination.currentPage === 1}
-					>
-						<FaChevronLeft />
-					</button>
-
-					<div className="flex items-center px-3 bg-indigo-600 rounded-md">
-						{pagination.currentPage}
-					</div>
-
-					<button
-						className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-						onClick={() => handlePageChange(pagination.currentPage + 1)}
-						disabled={pagination.currentPage === totalPages}
-					>
-						<FaChevronRight />
-					</button>
-				</div>
+				<button
+					className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					onClick={() => handlePageChange(pagination.currentPage + 1)}
+					disabled={pagination.currentPage === totalPages || totalPages === 0}
+				>
+					<FaChevronRight />
+				</button>
 			</div>
 		</div>
-	)
+	);
 }
+
