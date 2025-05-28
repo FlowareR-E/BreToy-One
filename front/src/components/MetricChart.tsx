@@ -50,7 +50,7 @@ export const MetricChart: React.FC = () => {
     datasets: [
       {
         label: 'Total Value',
-        data: metrics.metricsByCategory.map(item => item.totalInventoryValue), // assumes this field exists
+        data: metrics.metricsByCategory.map(item => item.totalInventoryValue), 
         backgroundColor: '#FBBF24',
       },
     ],
@@ -102,10 +102,14 @@ export const MetricChart: React.FC = () => {
           <p className="text-2xl font-bold">{metrics.totalProducts}</p>
         </div>
         <div className="bg-gray-700 p-4 rounded-lg">
+          <p className="text-gray-400 text-sm">Total Products in Stock</p>
+          <p className="text-2xl font-bold">{metrics.totalProductsInStock}</p>
+        </div>
+        <div className="bg-gray-700 p-4 rounded-lg">
           <p className="text-gray-400 text-sm">Total Inventory Value</p>
           <p className="text-2xl font-bold">${metrics.totalInventoryValue.toLocaleString()}</p>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg">
+        <div className="bg-gray-700 p-4 rounded-lg self">
           <p className="text-gray-400 text-sm">Average Price</p>
           <p className="text-2xl font-bold">${metrics.averagePrice.toFixed(2)}</p>
         </div>
