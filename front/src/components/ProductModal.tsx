@@ -103,6 +103,8 @@ export const ProductModal = ({ isOpen, onClose, onSubmit: onSubmit, title, initi
                 quantity: 0,
             });
             setErrors({});
+            setIsCustomCategory(false);
+
         } finally {
             setIsSubmitting(false);
         }
